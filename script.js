@@ -61,9 +61,11 @@ const inputLoanAmount = document.querySelector('.form__input--loan-amount');
 const inputCloseUsername = document.querySelector('.form__input--user');
 const inputClosePin = document.querySelector('.form__input--pin');
 
-const displayMovements = function (movements) {
+const displayMovements = function (movements, sort = false) {
   containerMovements.innerHTML = '';
-  movements.forEach(function (movement, i) {
+  const movs = sort ? movements.slice().sort((a, b) => a - b) : movements;
+
+  movs.forEach(function (movement, i) {
     const type = movement > 0 ? 'deposit' : 'withdrawal';
     const html = `
         <div class="movements__row">
@@ -202,6 +204,27 @@ btnTransfer.addEventListener('click', function (e) {
     updateUI(currentAccount);
   }
 });
+
+btnLoan.addEventListener('click', function (e) {
+  e.preventDefault();
+  const amount = Number(inputLoanAmount.value);
+
+  if (
+    amount > 0 &&
+    currentAccount.movements.some(function (mov) {
+      return mov > amount * 0.1;
+    })
+  ) {
+    //add movement
+    currentAccount.movements.push(amount);
+
+    //updateUI
+    updateUI(currentAccount);
+  }
+
+  inputLoanAmount.value = '';
+});
+
 btnClose.addEventListener('click', function (e) {
   e.preventDefault();
 
@@ -223,6 +246,12 @@ btnClose.addEventListener('click', function (e) {
   inputCloseUsername.value = inputClosePin.value = '';
 });
 
+let sorted = false;
+btnSort.addEventListener('click', function (e) {
+  e.preventDefault();
+  displayMovements(currentAccount.movements, !sorted);
+  sorted = !sorted;
+});
 /*
 const user = 'Steven Thomas Williams'; //stw
 const username = user
@@ -495,3 +524,291 @@ const firstWithDrawal = movements.find(function (mov) {
 const account = accounts.find(function (acc) {
   return acc.owner === 'Jessica Davis';
 });
+
+//INCLUDES
+// console.log(movements);
+// console.log(movements.includes(-130));  return true or false ,dans notre cas on nous retourne true car on a cette valeur dans notre tab
+
+//SOME
+const anyDeposit = movements.some(function (mov) {
+  return mov > 0;
+});
+// console.log(anyDeposit); return true because we satisfy the condition
+
+//EVERY
+// console.log(account4.movements.every(mov => mov > 0));
+
+//separate callback
+const deposit = mov => mov > 0;
+// console.log(movements.every(deposit));
+
+//FLAT
+const arrr = [[1, 2, 3], [4, 5, 6], 7, 8];
+// console.log(arrr.flat());
+
+const arrrDeep = [[1, [2, 3]], [[4, 5], 6], 7, 8];
+// console.log(arrrDeep.flat(2));
+
+/*
+const movementAccount = accounts.map(function (acc) {
+  return acc.movements;
+});
+console.log(movementAccount);
+
+const allMovements = movementAccount.flat();
+console.log(movementAccount.flat());
+
+const overalBalance = allMovements.reduce(function (acc, mov) {
+  return acc + mov;
+}, 0);
+*/
+
+//Exemple With FLAT
+
+//dans ce cas on a créer un tableau de tableau en suite avec flat on l'a rendu un seul tableau
+const overalBalance = accounts
+  .map(function (acc) {
+    return acc.movements;
+  })
+  .flat()
+  .reduce(function (acc, mov) {
+    return acc + mov;
+  }, 0);
+// console.log(overalBalance);
+
+//Exemple With FLAT_MAP
+const overalBalancee = accounts
+  .flatMap(function (acc) {
+    return acc.movements;
+  })
+
+  .reduce(function (acc, mov) {
+    return acc + mov;
+  }, 0);
+// console.log(overalBalancee);
+
+//SORTING
+const owners = ['jonas', 'moussa', 'zizou', 'adem'];
+// console.log(owners.sort()); // de A a Z
+// console.log(owners); // il est muté
+
+// With Numbers
+
+//return < 0 , A , B (keep orders)
+//return > 0 , B , A (swith orders)
+
+/*
+movements.sort(function (a, b) {
+  //a et b c'est deux nombre qui ce suit
+  if (b > a) {
+    return -1;
+  }
+
+  if (b < a) {
+    return 1;
+  }
+});
+*/
+movements.sort((a, b) => a - b);
+// console.log(movements);
+
+//FILL
+const x = new Array(10);
+// x.fill(10, 5); // on insere 10 aprartir de la 5ieme
+x.fill(10, 3, 5); // on insere 10 aprartir de la 3ieme jusqu'a la 4ieme (non la 5ieme)
+// console.log(x);
+
+const arrrr = [1, 2, 3, 4, 5, 6, 7];
+arrrr.fill(23, 5, 6);
+// console.log(arrrr);
+
+// ARRAY.FROM
+const y = Array.from({ length: 7 }, () => 1);
+const z = Array.from({ length: 7 }, (curr, i) => i + 1);
+
+labelBalance.addEventListener('click', function () {
+  //document.querySelectorAll('.movements__value') n'est pas un vrai tableau
+  //c'est une node-list alors on l'a convertit en vrai
+  //tableau avec Array.from() et la Array.from() a comme deuxieme argument
+  // une callback-function
+
+  const movementsUI = Array.from(
+    //on retire les sommes d'argent on enleve le '€' et on les affiche
+    document.querySelectorAll('.movements__value'),
+    function (movUI) {
+      return Number(movUI.textContent.replace('€', ''));
+    }
+  );
+
+  console.log(movementsUI);
+});
+
+// 1.
+const bankDepositSum = accounts
+  .flatMap(acc => acc.movements)
+  .filter(mov => mov > 0)
+  .reduce((acc, mov) => acc + mov, 0);
+//console.log(bankDepositSum);
+
+// 2.
+
+// const numDeposit1000 = accounts
+//   .flatMap(acc => acc.movements)
+//   .filter(mov => mov >= 1000).length;
+
+const numDeposit1000 = accounts
+  .flatMap(acc => acc.movements)
+  .reduce((acc, curr) => (curr >= 1000 ? ++acc : acc), 0);
+
+// console.log(numDeposit1000);
+
+// 3.
+
+const { Deposits, Withdrawals } = accounts
+  .flatMap(acc => acc.movements)
+  .reduce(
+    (acc, mv) => {
+      // mv > 0 ? (acc.Deposits += mv) : (acc.Withdrawals += mv);
+      acc[mv > 0 ? 'Deposits' : 'Withdrawals'] += mv;
+      return acc;
+    },
+    { Deposits: 0, Withdrawals: 0 }
+  );
+
+// console.log(Deposits, Withdrawals);
+
+// 4.
+
+const convertTitleCase = function (title) {
+  const capitalize = function (str) {
+    return str[0].toUpperCase() + str.slice(1);
+  };
+
+  const exceptions = ['a', 'an', 'but', 'the', 'and', 'or', 'on', 'with', 'in'];
+  const titleCase = title
+    .toLowerCase()
+    .split(' ')
+    .map(word => (exceptions.includes(word) ? word : capitalize(word)))
+    .join(' ');
+
+  return capitalize(titleCase);
+};
+
+// console.log(convertTitleCase('and this is a nice title'));
+
+// CODING CHALENGE 4
+const dogs = [
+  { weight: 22, curFood: 250, owners: ['Alice', 'Bob'] },
+  { weight: 8, curFood: 200, owners: ['Matilda'] },
+  { weight: 13, curFood: 275, owners: ['Sarah', 'John'] },
+  { weight: 32, curFood: 340, owners: ['Michael'] },
+];
+
+// Declarations des fonctions
+
+// 1.
+const calculateRecommendedFood = function (dogs) {
+  dogs.forEach(function (dog) {
+    dog.recommendedFood = Math.trunc(dog.weight ** 0.75 * 28);
+  });
+};
+
+// 2.
+const findSarahDog = function (dogs) {
+  const dogS = dogs.find(function (dog) {
+    return dog.owners.includes('Sarah');
+  });
+
+  const sarahDog = `Sara's Dog is eating ${
+    dogS.currFood > dogS.recommendedFood ? 'too much' : 'too litle'
+  }`;
+  console.log(sarahDog);
+};
+
+// 3.
+const ownersOfDogsEatingToMuch = function (dogs) {
+  const ownerDogs = dogs
+    .filter(dog => dog.curFood > dog.recommendedFood)
+    .flatMap(dog => dog.owners);
+
+  return ownerDogs;
+};
+
+const ownersOfDogsEatingToLittle = function (dogs) {
+  const ownerDogs = dogs
+    .filter(dog => dog.curFood < dog.recommendedFood)
+    .flatMap(dog => dog.owners);
+
+  return ownerDogs;
+};
+
+// 4.
+const logOwnersEatingHabits = function () {
+  console.log(`${ownersEatTooMuch.join(' and ')}'s dogs are eating too much! `);
+  console.log(
+    `${ownersEatTooLittle.join(' and ')}'s dogs are eating too little! `
+  );
+};
+
+// 5.
+const logExactlyAmount = function (dogs) {
+  const sameAmountDogs = dogs.some(dog => dog.currFood === dog.recommendedFood);
+  console.log(sameAmountDogs);
+};
+
+// 6.
+const logOkAmount = function (dogs) {
+  const OkAmount = dogs.some(
+    dog =>
+      dog.curFood > dog.recommendedFood * 0.9 &&
+      dog.curFood > dog.recommendedFood * 1.1
+  );
+
+  return OkAmount;
+};
+
+// 7.
+const logDogOkAmount = function (dogs) {
+  const dogOkAmount = dogs.filter(
+    dog =>
+      dog.curFood > dog.recommendedFood * 0.9 &&
+      dog.curFood > dog.recommendedFood * 1.1
+  );
+  console.log(dogOkAmount);
+};
+
+// 8.
+const dogsCoppy = function (dogs) {
+  const dogsSorted = dogs
+    .slice()
+    .sort((a, b) => a.recommendedFood - b.recommendedFood); // a et b sont les objets successifs
+
+  console.log(dogsSorted);
+};
+
+//Appel des fonctions
+
+// 1
+calculateRecommendedFood(dogs);
+
+// 2
+findSarahDog(dogs);
+
+// 3
+const ownersEatTooMuch = ownersOfDogsEatingToMuch(dogs);
+const ownersEatTooLittle = ownersOfDogsEatingToLittle(dogs);
+
+// 4
+logOwnersEatingHabits();
+
+// 5
+logExactlyAmount(dogs);
+
+// 6
+console.log('Dogs eating an okay amount:', logOkAmount(dogs));
+
+// 7
+logDogOkAmount(dogs);
+
+// 8
+dogsCoppy(dogs);
